@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>日本史 2025 Deep Learning Pro+ (Ultra)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Orbitron:wght@400;700;900&family=Cinzel:wght@700&display=swap');
+        
+        :root {
+            --bg-deep: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.85);
+            --accent-indigo: #6366f1;
+            --accent-emerald: #10b981;
+            --accent-rose: #f43f5e;
+            --accent-amber: #f59e0b;
+        }
+
+        body { 
+            font-family: 'Noto Sans JP', sans-serif; 
+            background-color: var(--bg-deep);
+            color: #f8fafc;
+            margin: 0;
+            overflow-x: hidden;
+            -webkit-touch-callout: none;
+        }
+
+        .font-flashy { font-family: 'Orbitron', sans-serif; }
+        .font-header { font-family: 'Cinzel', serif; }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 縦向き制限オーバーレイ */
+        #orientation-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-deep);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+        }
+        @media (orientation: landscape) and (max-height: 500px) {
+            #orientation-overlay { display: flex; }
+        }
+
+        /* 選択肢の行高さ圧縮 */
+        .option-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #1e293b;
+            padding: 0.35rem 0.75rem !important;
+            min-height: 2.6rem;
+            line-height: 1.25;
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+        @media (min-width: 768px) {
+            .option-btn { padding: 0.8rem 1.5rem !important; min-height: 3rem; font-size: 1.1rem; }
+        }
+
+        .option-btn:not(:disabled):hover {
+            background: #334155;
+            transform: translateX(4px);
+            border-color: var(--accent-indigo);
+        }
+        .option-btn:disabled { opacity: 1; cursor: default; }
+
+        .explanation-card { line-height: 1.6; border-left: 4px solid var(--accent-indigo); }
+
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .progress-dot { width: 6px; height: 6px; border-radius: 50%; background: #334155; transition: all 0.3s; }
+        @media (min-width: 768px) { .progress-dot { width: 10px; height: 10px; } }
+        
+        .dot-correct { background: var(--accent-emerald); box-shadow: 0 0 8px var(--accent-emerald); }
+        .dot-wrong { background: var(--accent-rose); box-shadow: 0 0 8px var(--accent-rose); }
+        .dot-active { background: var(--accent-indigo); transform: scale(1.3); }
+
+        .result-title {
+            background: linear-gradient(to right, #6366f1, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+        }
+
+        .delta-mark { 
+            color: var(--accent-indigo); font-family: serif; font-style: italic; opacity: 0.8; 
+            display: inline-block; margin: 0 1px; font-size: 11px; animation: bounce 0.3s ease;
+        }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+
+        /* クレジットスタイル（ネオンバッジ復元） */
+        .credit-badge {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            padding: 10px 28px;
+            border-radius: 100px;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <div id="orientation-overlay">
+        <i class="fas fa-mobile-alt text-5xl mb-4 text-indigo-500 animate-bounce"></i>
+        <h2 class="text-2xl font-black mb-2 uppercase italic text-white">Use Portrait Mode</h2>
+        <p class="text-slate-400">最高の体験のため、端末を縦向きにして演習を継続してください。</p>
+    </div>
+
+    <div id="app" class="max-w-4xl mx-auto w-full flex-grow px-3 py-3 md:p-8 flex flex-col justify-start md:justify-center">
+        
+        <!-- 1. Home Screen -->
+        <div id="home-screen" class="space-y-6 md:space-y-8 fade-in">
+            <div class="text-center space-y-2">
+                <h1 class="text-4xl md:text-7xl font-header tracking-tighter text-white">
+                    HISTORIA <span class="text-indigo-500 font-flashy text-2xl md:text-5xl">ULTRA</span>
+                </h1>
+                <p class="text-slate-400 font-medium tracking-[0.1em] uppercase text-[10px] md:text-sm">2025 Neural Exam System | 原始時代</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                <!-- Analytics Panel -->
+                <div class="lg:col-span-2 glass-panel rounded-[1.5rem] md:rounded-[2.5rem] p-5 md:p-8 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-[10px] md:text-xs font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                            <i class="fas fa-chart-area"></i> Neural Performance
+                        </h2>
+                        <button onclick="toggleWeakList()" class="text-[9px] bg-rose-500/20 text-rose-300 px-3 py-1 rounded-full border border-rose-500/30 font-black hover:bg-rose-500/40 transition-all uppercase">
+                            <i class="fas fa-search"></i> Analysis
+                        </button>
+                    </div>
+                    <div style="position:relative; height:180px; width:100%"><canvas id="performanceChart"></canvas></div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="bg-slate-900/50 p-2 md:p-3 rounded-xl border border-white/5 text-center">
+                            <p class="text-[8px] md:text-[9px] text-slate-500 mb-0.5 uppercase font-bold">通算平均</p>
+                            <p id="all-time-accuracy" class="text-sm md:text-lg font-flashy text-white">--%</p>
+                        </div>
+                        <div class="bg-slate-900/50 p-2 md:p-3 rounded-xl border border-white/5 text-center">
+                            <p class="text-[8px] md:text-[9px] text-slate-500 mb-0.5 uppercase font-bold">直近10回</p>
+                            <p id="recent-accuracy" class="text-sm md:text-lg font-flashy text-indigo-400">--%</p>
+                        </div>
+                        <div class="bg-slate-900/50 p-2 md:p-3 rounded-xl border border-white/5 text-center">
+                            <p class="text-[8px] md:text-[9px] text-slate-500 mb-0.5 uppercase font-bold">最高スコア</p>
+                            <p id="best-accuracy" class="text-sm md:text-lg font-flashy text-emerald-400">--%</p>
+                        </div>
+                        <div class="bg-slate-900/50 p-2 md:p-3 rounded-xl border border-white/5 text-center">
+                            <p class="text-[8px] md:text-[9px] text-slate-500 mb-0.5 uppercase font-bold">前回成績</p>
+                            <p id="last-accuracy" class="text-sm md:text-lg font-flashy text-white">--%</p>
+                        </div>
+                    </div>
+                    <div id="weak-point-modal" class="hidden bg-slate-950/90 rounded-2xl p-4 border border-rose-500/30 max-h-[200px] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xs font-black text-rose-400 uppercase tracking-widest italic">Critical Weak Points</h3>
+                            <button onclick="toggleWeakList()" class="text-slate-500"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div id="weak-point-list" class="space-y-2 text-[10px]"></div>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div class="glass-panel rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-8 space-y-6 md:space-y-8">
+                    <div class="space-y-4 text-center">
+                        <label class="text-[10px] md:text-xs font-black text-indigo-400 uppercase tracking-widest block italic font-bold">Goal Target</label>
+                        <select id="goal-select" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 md:p-4 text-xs md:text-sm text-white font-bold outline-none appearance-none text-center">
+                            <option value="40">40% (ランクC: 基礎確認)</option>
+                            <option value="60">60% (ランクB: 標準レベル)</option>
+                            <option value="80">80% (ランクA: 上位校レベル)</option>
+                            <option value="90">90% (ランクS: 難関校レベル)</option>
+                            <option value="100" selected>100% (ランクSS: 完璧を目指す)</option>
+                        </select>
+                    </div>
+                    <div class="space-y-4">
+                        <label class="text-[10px] md:text-xs font-black text-indigo-400 uppercase tracking-widest block text-center italic font-bold">Session Range</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="setRange(0, 10)" class="range-btn bg-slate-800 hover:bg-indigo-600 p-2.5 rounded-lg text-[9px] font-black uppercase transition-all">1-10</button>
+                            <button onclick="setRange(10, 20)" class="range-btn bg-slate-800 hover:bg-indigo-600 p-2.5 rounded-lg text-[9px] font-black uppercase transition-all">11-20</button>
+                            <button onclick="setRange(20, 30)" class="range-btn bg-slate-800 hover:bg-indigo-600 p-2.5 rounded-lg text-[9px] font-black uppercase transition-all">21-30</button>
+                            <button onclick="setRange(30, 40)" class="range-btn bg-slate-800 hover:bg-indigo-600 p-2.5 rounded-lg text-[9px] font-black uppercase transition-all">31-40</button>
+                            <button onclick="setRange(40, 50)" class="range-btn bg-slate-800 hover:bg-indigo-600 p-2.5 rounded-lg text-[9px] font-black uppercase transition-all">41-50</button>
+                            <button onclick="startRecoveryMode()" class="range-btn bg-rose-900/50 hover:bg-rose-800 border border-rose-500/30 p-2.5 rounded-lg text-[9px] font-black uppercase text-rose-200"><i class="fas fa-tools"></i> RECOVERY</button>
+                            <div class="col-span-2 h-px bg-slate-700 my-1 opacity-30"></div>
+                            <button onclick="setRange(0, 50)" class="range-btn col-span-2 bg-indigo-600 hover:bg-indigo-500 p-4 rounded-xl text-xs md:text-sm font-black shadow-lg shadow-indigo-500/20 uppercase tracking-widest">
+                                <i class="fas fa-bolt mr-2"></i> ALL 50 QUESTIONS
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Quiz Screen -->
+        <div id="quiz-screen" class="hidden space-y-4 md:space-y-6 fade-in pb-10">
+            <div class="grid grid-cols-4 gap-2 md:gap-4 px-1">
+                <div class="glass-panel p-2 md:p-3 rounded-xl text-center">
+                    <p class="text-[8px] md:text-[9px] text-slate-500 font-bold uppercase mb-0.5">Acc.</p>
+                    <p id="current-accuracy" class="text-sm md:text-xl font-flashy text-indigo-400">0%</p>
+                </div>
+                <div class="glass-panel p-2 md:p-3 rounded-xl text-center">
+                    <p class="text-[8px] md:text-[9px] text-slate-500 font-bold uppercase mb-0.5">Goal</p>
+                    <p id="display-goal" class="text-sm md:text-xl font-flashy text-slate-300">100%</p>
+                </div>
+                <div class="glass-panel p-2 md:p-3 rounded-xl text-center relative overflow-hidden">
+                    <p class="text-[8px] md:text-[9px] text-slate-500 font-bold uppercase mb-0.5">Streak</p>
+                    <p id="current-streak" class="text-sm md:text-xl font-flashy text-amber-400">0</p>
+                    <div id="delta-container" class="absolute -bottom-0.5 left-0 w-full flex justify-center flex-wrap px-0.5 h-2 overflow-hidden"></div>
+                </div>
+                <div class="glass-panel p-2 md:p-3 rounded-xl text-center">
+                    <p class="text-[8px] md:text-[9px] text-slate-500 font-bold uppercase mb-0.5">Prog.</p>
+                    <p class="text-sm md:text-lg font-flashy text-white"><span id="q-current">1</span>/<span id="q-total">10</span></p>
+                </div>
+            </div>
+
+            <div id="dot-bar" class="flex justify-center flex-wrap gap-1 px-1 py-0.5"></div>
+
+            <div class="glass-panel rounded-[1.5rem] md:rounded-[3rem] p-5 md:p-14 shadow-2xl relative overflow-hidden border-indigo-500/20">
+                <div id="goal-indicator" class="absolute top-0 left-0 h-1 bg-indigo-500 transition-all duration-700" style="width: 0%"></div>
+                
+                <div class="space-y-4 md:space-y-8">
+                    <div class="flex justify-between items-center border-b border-white/5 pb-3">
+                        <span id="diff-badge" class="px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest bg-slate-800 text-slate-300"></span>
+                        <div class="text-right">
+                            <p id="q-history-stat" class="text-[8px] md:text-[10px] font-flashy text-indigo-400 mb-1">0% (0/0)</p>
+                            <div id="question-history-dots" class="flex gap-1 justify-end opacity-70"></div>
+                        </div>
+                    </div>
+
+                    <h2 id="question-text" class="text-lg md:text-3xl font-bold leading-snug text-white"></h2>
+                    <div id="options-container" class="grid grid-cols-1 gap-2 md:gap-4 pt-2"></div>
+                </div>
+            </div>
+
+            <div id="feedback-area" class="hidden space-y-4 fade-in">
+                <div class="flex items-center gap-4">
+                    <div id="result-badge" class="px-6 py-2 rounded-full text-[10px] md:text-xs font-black tracking-widest shadow-2xl uppercase"></div>
+                    <div id="voice-message" class="text-indigo-300 font-flashy text-[10px] italic tracking-widest"></div>
+                    <div class="h-px bg-slate-800 flex-grow opacity-50"></div>
+                </div>
+                <div id="explanation-box" class="bg-white/5 rounded-[1.5rem] p-6 md:p-10 border border-white/10 shadow-inner overflow-y-auto max-h-[250px] md:max-h-none">
+                    <div id="explanation-content" class="explanation-card text-slate-300 text-sm md:text-lg whitespace-pre-line px-4 md:px-8"></div>
+                </div>
+                <button id="next-btn" class="w-full bg-white text-slate-900 font-black py-5 rounded-2xl md:rounded-3xl hover:bg-indigo-50 transition-all text-lg md:text-xl shadow-2xl flex justify-center items-center gap-4 group">
+                    PROCEED <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. Result Screen -->
+        <div id="result-screen" class="hidden space-y-8 fade-in py-8 pb-20">
+            <div class="glass-panel rounded-[2rem] md:rounded-[4rem] p-8 md:p-20 text-center space-y-8 border-indigo-500/40 relative overflow-hidden">
+                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--accent-indigo)_0%,_transparent_70%)]"></div>
+                <div class="relative space-y-6">
+                    <div id="final-icon" class="text-7xl md:text-8xl mb-4 animate-bounce"></div>
+                    <h2 class="text-3xl md:text-7xl font-flashy tracking-tighter result-title uppercase italic">Neural Sync Complete</h2>
+                    <div class="space-y-2">
+                        <p id="final-praise" class="text-indigo-400 font-flashy text-sm md:text-xl tracking-[0.3em] uppercase"></p>
+                        <p id="final-praise-jp" class="text-indigo-200 font-bold text-lg md:text-3xl mt-2"></p>
+                    </div>
+                    <p id="final-message" class="text-slate-400 font-medium max-w-2xl mx-auto text-sm md:text-lg leading-relaxed whitespace-pre-line px-4"></p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
+                    <div class="bg-slate-900/90 p-6 rounded-[1.5rem] border border-white/5 border-l-4 border-l-indigo-500 text-center">
+                        <p class="text-xs text-slate-500 font-black uppercase mb-2 text-center text-[10px]">Session Accuracy</p>
+                        <p class="text-5xl md:text-8xl font-flashy text-indigo-500 text-center"><span id="final-score">0</span>%</p>
+                    </div>
+                    <div class="bg-slate-900/90 p-6 rounded-[1.5rem] border border-white/5 border-l-4 border-l-amber-500 flex flex-col justify-center text-center">
+                        <p class="text-xs text-slate-500 font-black uppercase mb-2 text-center text-[10px]">Peak Streak</p>
+                        <p id="final-streak" class="text-5xl md:text-8xl font-flashy text-amber-400 text-center">0</p>
+                    </div>
+                </div>
+                <button onclick="showHome()" class="w-full bg-indigo-600 text-white font-black py-5 rounded-2xl md:rounded-3xl hover:bg-indigo-50 transition-all text-lg shadow-2xl relative uppercase tracking-widest">
+                    <i class="fas fa-undo-alt mr-3"></i> Back to Hub
+                </button>
+            </div>
+
+            <div id="review-section" class="hidden space-y-6">
+                <h3 class="text-xl md:text-3xl font-flashy text-indigo-400 flex items-center gap-4 px-4 uppercase">
+                    <i class="fas fa-exclamation-triangle text-rose-500"></i> Recovery Data (Weak Points Review)
+                </h3>
+                <div id="review-list-container" class="space-y-4 px-2 pb-20"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- フッター -->
+    <footer class="p-10 text-center bg-[#070b14] border-t border-white/10 mt-auto">
+        <p class="text-slate-500 text-[10px] uppercase tracking-[0.5em] mb-4">
+            &copy; 2025 NEURAL HISTORY SYSTEMS | HIGH SPEC EDITION
+        </p>
+        <div class="credit-badge">
+            <p class="text-[10px] md:text-xs tracking-widest uppercase font-bold">
+                Developed by <span class="text-white italic underline decoration-indigo-500 decoration-4">myo-n</span> using ChatGPT 5.2 and Gemini 3.0
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // 完全復元された全50問・詳細解説データ (中略なし)
+        const masterData = [
+            { id: 1, question: "旧石器時代の人々の生活として最も適切なものはどれか。", options: ["狩猟・採集を中心とする移動生活", "水田稲作を中心とする定住生活", "環濠集落で防御しながら定住生活", "鉄製農具で耕作する農村生活"], answer: "狩猟・採集を中心とする移動生活", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n旧石器時代は農耕が未普及のため、獲物や植物を求めて移動しながらテント式の仮住まいで生活するのが基本でした。\n\n[誤選択肢の正体]：\n・水田稲作：弥生時代の基幹知識（生産力の向上と社会変化に直結）。\n・環濠集落：弥生時代の防御的集落の特徴。\n・鉄製農具：普及は古墳時代以降（弥生期は鉄器工具の使用が主）。\n\n[＋α]：\n旧石器時代は地質学上の「更新世（氷期）」にあたります。ナウマン象やヘラジカなどの大型動物を追う生活であったことも重要です。" },
+            { id: 2, question: "旧石器時代の石器として最も適切なものはどれか。", options: ["磨製石斧", "石包丁", "銅鐸", "打製石器"], answer: "打製石器", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n『打製石器』が適切。石を打ち欠いて鋭い刃を作る石器で、用途に応じてナイフ形石器などが作られました。\n\n[誤選択肢の正体]：\n・磨製石斧：縄文時代の特徴（石を磨いて作る）。\n・石包丁：弥生時代（稲の収穫用）。\n・銅鐸：弥生時代の青銅祭器。\n\n[＋α]：\n1949年の岩宿遺跡での相沢忠洋による発見が、日本の旧石器研究の端緒となりました。" },
+            { id: 3, question: "旧石器時代の自然環境として正しいものはどれか。", options: ["現在とほぼ同じ海岸線", "氷河期にあたり、海面が低下していた", "温暖で稲作に適した気候", "熱帯性植物が生い茂る環境"], answer: "氷河期にあたり、海面が低下していた", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n『氷河期にあたり、海面が低下していた』が適切。地質学上の「更新世」にあたり、海面低下によりアジア大陸と陸続きになる時期もありました。\n\n[誤選択肢の正体]：\n・現在と同じ海岸線：完新世（縄文時代）の特徴。温暖化による海進が起きた後です。\n・温暖・稲作適性：弥生時代の環境。\n\n[＋α]：\nこの時期、大陸からナウマン象やマンモスが渡来し、それを追って人類も移動してきました。" },
+            { id: 4, question: "旧石器時代と縄文時代を分ける要素として最も適切なものはどれか。", options: ["鉄器の使用", "青銅器の普及", "土器の使用", "文字の使用"], answer: "土器の使用", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n『土器の使用』が適切。土器の登場は食料の煮炊きを可能にし、定住化を加速させました。\n\n[誤選択肢の正体]：\n・鉄器・青銅器：弥生時代以降に大陸から伝来。\n・文字：古墳時代以降に本格流入。\n\n[＋α]：\n縄文土器は、厚手で黒褐色、低温焼成（600〜900℃）が特徴です。" },
+            { id: 5, question: "旧石器時代に定住生活が見られなかった理由として最も適切なものはどれか。", options: ["農耕が未発達だったため", "戦争が多発していたため", "支配者に強制されたため", "住居技術がなかったため"], answer: "農耕が未発達だったため", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n農耕がなく、自然の資源に依存する狩猟・採集生活だったため、獲物を追って移動する必要がありました。\n\n[誤選択肢の正体]：\n・戦争：余剰生産物が生まれる弥生以降の特徴。\n・支配者：階級社会が進む弥生以降。\n\n[＋α]：\n旧石器時代の人々は、洞穴や岩陰、あるいは簡単なテント式の住居を利用していました。" },
+            { id: 6, question: "旧石器時代の存在を日本で初めて実証した遺跡として正しいものはどれか。", options: ["三内丸山遺跡", "登呂遺跡", "岩宿遺跡", "吉野ヶ里遺跡"], answer: "岩宿遺跡", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n群馬県の岩宿遺跡。相沢忠洋によって発見され、日本にも旧石器時代が存在したことを示しました。\n\n[誤選択肢の正体]：\n・三内丸山：縄文（青森）。\n・登呂：弥生（静岡）。\n・吉野ヶ里：弥生（佐賀）。\n\n[＋α]：\n発見者の相沢忠洋は独学の考古学者で、納豆の行商をしながら発掘を続けていました。" },
+            { id: 7, question: "旧石器時代後期に出現した、小型石器を骨角器に埋め込んで使用したものはどれか。", options: ["尖頭器", "磨製石斧", "細石刃", "石包丁"], answer: "細石刃", diff: "難関", explanation: "【解説】\n\n[正解の根拠]：\n『細石刃（マイクロリス）』が適切。北東アジアから伝来した技術で、高度な替え刃式狩猟具として使用されました。\n\n[誤選択肢の正体]：\n・尖頭器：槍の先に取り付けた大型石器。\n・磨製石器：縄文時代以降の画期。\n・石包丁：弥生時代の収穫具（穂首刈り）。" },
+            { id: 8, question: "縄文時代の特徴として最も適切なものはどれか。", options: ["鉄器が普及した", "青銅器祭器が多用された", "磨製石器と土器を使用した", "打製石器のみを使用した"], answer: "磨製石器と土器を使用した", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n縄文時代は、磨製石器の本格的使用と土器の出現、そして定住生活の開始が大きな特徴です。\n\n[誤選択肢の正体]：\n・鉄器・青銅器：金属器は弥生以降に大陸から伝来。\n・打製石器のみ：旧石器時代の特徴（縄文でも打製石器は併用されるが「のみ」ではない）。" },
+            { id: 9, question: "縄文土器の用途として最も適切なものはどれか。", options: ["収穫物の乾燥", "食料の煮炊きや保存", "防御用の武器", "貨幣としての交換"], answer: "食料の煮炊きや保存", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n煮炊きが可能になったことで、アクの強い食材（堅果類）や堅い食材も食べられるようになり、食生活が飛躍しました。\n\n[誤選択肢の正体]：\n・武器・貨幣：土器の主目的ではありません。一部の大型土器は貯蔵にも使われました。" },
+            { id: 10, question: "縄文時代を代表する住居形式はどれか。", options: ["校倉", "竪穴住居", "高床倉庫", "横穴式石室"], answer: "竪穴住居", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n『竪穴住居』が適切。地面を掘り下げ、柱を立てて屋根をかけた半地下式の住居で、防寒性に優れていました。\n\n[誤選択肢の正体]：\n・校倉：奈良時代（正倉院など）。\n・高床倉庫：弥生時代の穀物倉庫。\n・石室：古墳の埋葬施設。" },
+            { id: 11, question: "貝塚の性格として近年有力な説明はどれか。", options: ["生活のごみ捨て場", "生命の再生を願う祭祀的な場所", "外敵を防ぐための防壁", "土器を焼くための工房跡"], answer: "生命の再生を願う祭祀的な場所", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n単なるゴミ捨て場ではなく、人骨や犬の骨も丁寧に葬られており、自然への感謝や生命の再生を願う「送り場」と捉えられています。\n\n[誤選択肢の正体]：\n・防壁：弥生の環濠の特徴。\n・工房：目的が限定的すぎます。" },
+            { id: 12, question: "縄文時代の精神文化を象徴する、女性を模したと考えられる遺物はどれか。", options: ["銅鐸", "埴輪", "土偶", "石包丁"], answer: "土偶", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n『土偶』が適切。安産や豊穣を願う呪術・祭祀に用いられ、故意に破壊されたものも見つかります。\n\n[誤選択肢の正体]：\n・銅鐸：弥生祭器（近畿中心）。\n・埴輪：古墳の土製品。\n・石包丁：弥生の農具。" },
+            { id: 13, question: "縄文時代の社会の在り方として最も適切なものはどれか。", options: ["身分差が固定した階級社会", "小規模な集落を単位とする平等な社会", "全国を統治する中央集権国家", "文字による契約社会"], answer: "小規模な集落を単位とする平等な社会", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n一般に顕著な階層分化は想定されず、家族を中心とする共同体社会であったと考えられます。\n\n[誤選択肢の正体]：\n・階級社会：弥生以降に富の蓄積で顕著化。\n・中央集権・文字：はるか後世の事象。" },
+            { id: 14, question: "青森県にある縄文時代中期の大規模集落遺跡はどれか。", options: ["登呂遺跡", "三内丸山遺跡", "吉野ヶ里遺跡", "板付遺跡"], answer: "三内丸山遺跡", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n『三内丸山遺跡』が適切。巨大な掘立柱建物跡や栗の管理栽培が発見され、縄文社会のイメージを一新しました。\n\n[誤選択肢の正体]：\n・登呂・吉野ヶ里・板付：いずれも弥生時代の重要遺跡です。" },
+            { id: 15, question: "縄文時代、新潟県姫川流域を産地として広域に交易された石材はどれか。", options: ["黒曜石", "ひすい", "讃岐岩", "石灰岩"], answer: "ひすい", diff: "難関", explanation: "【解説】\n\n[正解の根拠]：\n産地が限定されている『ひすい』が全国で見つかることは、広域交易の存在を強力に裏付けます。\n\n[誤選択肢の正体]：\n・黒曜石：和田峠や十勝岳など複数産地あり。 ＋α：ひすいは勾玉などに加工されました。" },
+            { id: 16, question: "縄文時代の時期区分はいくつに分けられるか。", options: ["3区分", "4区分", "6区分", "10区分"], answer: "6区分", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n草創期、早期、前期、中期、後期、晩期の6期です。土器の変遷で時期を特定するのが基本です。" },
+            { id: 17, question: "弥生時代の始まりを定義する最も重要な要素はどれか。", options: ["鉄器の完全普及", "水田稲作の開始", "巨大古墳の築造", "文字の公用"], answer: "水田稲作の開始", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n大陸から伝わった水田稲作が生産力と社会構造を激変させ、弥生時代が成立しました。\n\n[誤選択肢の正体]：\n・巨大古墳：古墳時代。 ＋α：弥生時代は紀元前10世紀頃まで遡る説が近年有力です。" },
+            { id: 18, question: "弥生時代の稲作が伝来した主な経路として最も有力な説はどれか。", options: ["朝鮮半島南部から北九州へ", "中国南部から直接近畿へ", "シベリアから北海道へ", "東南アジアから沖縄へ"], answer: "朝鮮半島南部から北九州へ", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n石器や土器の類似性からも、朝鮮半島経由が現在最も有力視されています。" },
+            { id: 19, question: "弥生時代の集落で、防御のために周囲に溝を巡らせたものを何というか。", options: ["環状集落", "環濠集落", "高地性集落", "都市型集落"], answer: "環濠集落", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n集落間の争いの激化を背景に、V字型の深い溝を掘った環濠集落が普及しました。 ＋α：吉野ヶ里遺跡が最大級。" },
+            { id: 20, question: "弥生時代の北九州から広まった、天井石を支え石で支える墓制はどれか。", options: ["支石墓", "前方後円墳", "方形周溝墓", "火葬墓"], answer: "支石墓", diff: "難関", explanation: "【解説】\n\n[正解の根拠]：\n朝鮮半島の影響を強く受けた墓制で、有力者の出現と大陸との交流を示します。\n\n[誤選択肢の正体]：\n・前方後円墳：古墳時代。\n・方形周溝墓：弥生の一般的な墓制。" },
+            { id: 21, question: "『漢書』地理志に記されている、紀元前1世紀頃の倭の状況はどれか。", options: ["卑弥呼が統治していた", "倭人は100余国に分かれていた", "魏に使者を送った", "律令を整備していた"], answer: "倭人は100余国に分かれていた", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n「楽浪海中に倭人あり、分かれて百余国となる」とあり、定期的な朝貢が記されています。" },
+            { id: 22, question: "57年、光武帝から金印を授かったとされる倭の君主はどこか。", options: ["邪馬台国王", "倭の五王", "奴国の王", "帥升"], answer: "奴国の王", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n『後漢書』東夷伝に「倭の奴国、奉貢朝賀す」と金印授与が記されています。 ＋α：金印には「漢委奴国王」と刻印されています。" },
+            { id: 23, question: "弥生時代の青銅器（銅鐸など）の主な用途はどれか。", options: ["実用的な武器", "農作業用の道具", "祭祀・呪術用の祭器", "貨幣としての流通"], answer: "祭祀・呪術用の祭器", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n当初は実用に近い形でしたが、次第に大型化し「見る祭器」へと変化しました。 ＋α：地域差（銅鐸＝近畿、銅矛＝北九州）も頻出。" },
+            { id: 24, question: "弥生時代の鉄器が果たした主な役割はどれか。", options: ["装飾品としての価値のみ", "祭祀におけるシンボル", "農具・工具としての実用化", "校倉造の建材"], answer: "農具・工具としての実用化", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n鋭利な鉄製の刃先を装着することで、開墾や耕作の効率が劇的に向上し、生産力を引き上げました。" },
+            { id: 25, question: "弥生時代に身分差や首長層が形成された最大の要因はどれか。", options: ["狩猟技術の向上", "水田稲作による富の蓄積と管理", "仏教の伝来", "文字の公用"], answer: "水田稲作による富の蓄積と管理", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n余剰生産物の蓄積と、大規模な灌漑工事の指揮が必要になったことで、指導者が現れました。" },
+            { id: 26, question: "邪馬台国について最も詳しく記されている中国の史料はどれか。", options: ["『漢書』地理志", "『後漢書』東夷伝", "『魏志』倭人伝", "『隋書』倭国伝"], answer: "『魏志』倭人伝", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n3世紀の倭国の政治、社会、卑弥呼の統治について最も詳細な一級史料です。 ＋α：正式名は『三国志』魏書東夷伝倭人条。" },
+            { id: 27, question: "弥生時代から古墳時代への移行を象徴する最大の変化はどれか。", options: ["稲作の廃止", "巨大な前方後円墳の出現と支配の広域化", "鉄器の使用停止", "遣唐使の派遣"], answer: "巨大な前方後円墳の出現と支配の広域化", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n共通の葬送儀礼を受け入れることで、広域的な政治連合が形成されたことを象徴します。" },
+            { id: 28, question: "『魏志』倭人伝において、倭国の政治的監視を行った官職はどれか。", options: ["一大率", "大夫", "持衰", "生口"], answer: "一大率", diff: "最難関", explanation: "【解説】\n\n[正解の根拠]：\n『一大率』が適切。伊都国に置かれ、女王の権威を背景に周辺諸国を検察したとされる官職で、邪馬台国の支配力を示します。" },
+            { id: 29, question: "卑弥呼が魏に使いを送り、「親魏倭王」の称号を得たのは西暦何年か。", options: ["57年", "107年", "239年", "248年"], answer: "239年", diff: "難関", explanation: "【解説】\n\n[正解の根拠]：\n魏の明帝（景初3年）に朝貢。鏡100枚なども授かりました。 ＋α：使者の難升米の名も重要。" },
+            { id: 30, question: "弥生時代中期、静岡県で発見された農村の姿を証明した遺跡はどれか。", options: ["三内丸山遺跡", "吉野ヶ里遺跡", "登呂遺跡", "岩宿遺跡"], answer: "登呂遺跡", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n戦後の発掘で、水田や高床倉庫、木製農具が発見され、弥生の農村像を確立しました。" },
+            { id: 31, question: "弥生時代の水田のうち、鉄製農具の普及により可能になったのはどれか。", options: ["湿田", "乾田", "塩田", "水田なし"], answer: "乾田", diff: "難関", explanation: "【解説】\n\n[正解の根拠]：\n鋭利で頑丈な鉄器により排水や深耕が可能になり、生産力の高い乾田が普及しました。初期は湿田が中心でした。" },
+            { id: 32, question: "弥生時代の収穫用石器で、稲の穂先を摘み取る道具はどれか。", options: ["磨製石斧", "石包丁", "細石刃", "尖頭器"], answer: "石包丁", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n穴に紐を通して指にかけ、「穂首刈り」を行いました。 ＋α：鉄製鎌の登場により消滅します。" },
+            { id: 33, question: "卑弥呼の死後、混乱を収めたとされる女王は誰か。", options: ["推古天皇", "壱与（台与）", "持統天皇", "額田王"], answer: "壱与（台与）", diff: "難関", explanation: "【解説】\n\n[正解の根拠]：\n卑弥呼の宗女で、男王の後の内乱を鎮めたと『魏志』に記されています。 ＋α：彼女も魏（または晋）に朝貢したと考えられます。" },
+            { id: 34, question: "『魏志』倭人伝に記された「一大国」は現在のどこか。", options: ["対馬", "壱岐", "佐渡", "種子島"], answer: "壱岐", diff: "難関", explanation: "【解説】\n\n[正解の根拠]：\n「一支国」の誤記とされ、原の辻遺跡など交易の拠点が確認されています。\n\n[誤選択肢の正体]：\n・対馬＝対海国。 ＋α：一支国は「壱岐」に比定されます。" },
+            { id: 35, question: "弥生時代後期、地域独自の墳丘を持つ墓を何というか。", options: ["前方後円墳", "墳丘墓", "支石墓", "石室"], answer: "墳丘墓", diff: "難関", explanation: "【解説】\n\n[正解の根拠]：\n岡山県の楯築遺跡などに見られる大型の盛り土を持つ墓で、前方後円墳へと繋がる過渡的な形式です。" },
+            { id: 36, question: "弥生土器のうち、煮炊きに用いるものはどれか。", options: ["壺", "甕（かめ）", "高坏", "鉢"], answer: "甕（かめ）", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n弥生土器は用途が明確化。甕は煮炊き、壺は貯蔵、高坏は食物の盛り付けに用いられました。" },
+            { id: 37, question: "近畿地方を中心に発見される、釣り鐘型の青銅祭器を何というか。", options: ["銅鐸", "銅矛", "銅剣", "銅戈"], answer: "銅鐸", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n近畿一帯の文化圏を象徴する祭器で、大型化とともに「見る祭器」へ変化しました。\n\n[誤選択肢の正体]：\n他は北九州中心の「武器形祭器」です。" },
+            { id: 38, question: "『後漢書』において、107年に朝貢した倭国王は誰か。", options: ["卑弥呼", "帥升", "壱与", "難升米"], answer: "帥升", diff: "難関", explanation: "【解説】\n\n[正解の根拠]：\n107年に後漢の安帝に朝貢。日本史上、記録に残る最古の固有名詞です。 ＋α：生口160人を献じました。" },
+            { id: 39, question: "弥生時代の木製農具製作に欠かせなかった鉄製工具はどれか。", options: ["鉄鏃", "鉄鎌", "鉄斧・手斧", "鉄甲"], answer: "鉄斧・手斧", diff: "難関", explanation: "【解説】\n\n[正解の根拠]：\n精密な木材加工のため、鉄の刃先を持つ工具が不可欠でした。" },
+            { id: 40, question: "弥生時代の山頂などに作られた軍事・避難用集落を何というか。", options: ["環濠集落", "高地性集落", "平地集落", "城郭都市"], answer: "高地性集落", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n戦乱期の避難や監視を目的に、高い場所に作られた防御的集落です。 ＋α：紫雲出山遺跡など。" },
+            { id: 41, question: "近畿地方を中心に発見される、釣り鐘型の青銅祭器（銅鐸）の説明として正しいものはどれか。", options: ["当初から一貫して「見る祭器」として巨大であった", "当初は鐘として打ち鳴らす実用に近い「聞く祭器」であった", "北九州を中心に武器として使われていた", "朝鮮半島から伝来した鉄製の打楽器であった"], answer: "当初は鐘として打ち鳴らす実用に近い「聞く祭器」であった", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n銅鐸は当初、中に「舌」を吊るして音を出す「聞く祭器」でしたが、次第に大型化・装飾化し、地面に置いて拝む「見る祭器」へと変化しました。\n\n[誤選択肢の正体]：\n・「見る祭器」：大型化した後期の姿です。\n・北九州：北九州は銅矛・銅戈などの武器形祭器が主流です。\n・鉄製：青銅製（銅と錫の合金）です。\n\n[＋α]：\n銅鐸の表面には当時の狩猟や稲作の様子を描いた絵画文様が見られ、当時の生活を知る第一級の史料となっています。" },
+            { id: 42, question: "邪馬台国所在地論争で、近畿説の根拠となる奈良県の遺跡はどれか。", options: ["吉野ヶ里遺跡", "纒向遺跡", "板付遺跡", "菜畑遺跡"], answer: "纒向遺跡", diff: "最難関", explanation: "【解説】\n\n[正解の根拠]：\n巨大な建物跡や全国からの土器が出土。初期広域政治センターと考えられています。" },
+            { id: 43, question: "卑弥呼が用いたとされる呪術的な統治方法は何か。", options: ["仏教", "儒教", "鬼道", "キリスト教"], answer: "鬼道", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n巫女的な authority を背景に、超自然的な力（鬼道）によって衆を掌握しました。" },
+            { id: 44, question: "弥生時代の穀物を湿気やネズミから守る倉庫はどれか。", options: ["竪穴住居", "高床倉庫", "校倉造", "地下式横穴"], answer: "高床倉庫", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n床を高くして通風を確保し、ネズミ返しを設置した穀物専用の倉庫です。" },
+            { id: 45, question: "弥生時代の集落間の争いがあったことを示す考古学的証拠はどれか。", options: ["土偶の破壊", "環濠や受傷人骨", "装身具の大型化", "貝塚の消滅"], answer: "環濠や受傷人骨", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n防御用の濠や、武器による殺傷跡のある人骨が多数見つかり、組織的な戦乱を示します。" },
+            { id: 46, question: "北海道や長野を産地とする、鋭利な石材は何か。", options: ["ひすい", "黒曜石", "安山岩", "大理石"], answer: "黒曜石", diff: "難関", explanation: "【解説】\n\n[正解の根拠]：\n天然ガラス質で鋭い剥片が取れるため、旧石器から縄文にかけ広域取引されました。" },
+            { id: 47, question: "卑弥呼に仕え、飲食を給したとされる人物構成はどれか。", options: ["1000人の女性と1人の男性", "全員男性", "渡来人", "家族"], answer: "1000人の女性と1人の男性", diff: "難関", explanation: "【解説】\n\n[正解の根拠]：\n婢千人、男子一人が給辞・伝辞を行ったとされる、卑弥呼の神聖で隔絶した生活が記されています。" },
+            { id: 48, question: "弥生時代に行われた、海藻を用いた製塩法に関連する土器はどれか。", options: ["藻塩土器", "入浜土器", "製塩土器", "揚浜土器"], answer: "製塩土器", diff: "難関", explanation: "【解説】\n\n[正解の根拠]：\n海水を煮詰めて塩を作る専用の薄手土器で、内陸との交易にも使われました。" },
+            { id: 49, question: "縄文時代の漁労において、骨や角を加工して作られた道具を総称して何というか。", options: ["石器", "青銅器", "骨角器", "鉄器"], answer: "骨角器", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n釣り針や回転式銛など、漁労技術の高度化を示す重要な遺物（骨角器）です。" },
+            { id: 50, question: "邪馬台国が魏から授かった鏡の枚数はいくつか。", options: ["10枚", "50枚", "100枚", "1000枚"], answer: "100枚", diff: "標準", explanation: "【解説】\n\n[正解の根拠]：\n『魏志』倭人伝に「銅鏡百枚を賜う」とあり、日本の古墳出土品との関連が議論されています。" }
+        ];
+
+        // Global State
+        let quizData = []; let currentIdx = 0; let score = 0; let streak = 0; let maxStreak = 0;
+        let canAnswer = true; let goalAcc = 100; let activeRange = ""; let chartInstance = null;
+        let sessionAnswers = []; let incorrectIdx = [];
+
+        // 固定されたストレージキー
+        const STORAGE_KEY = 'nihonshi_pro_plus_ultra_v60_official';
+        const Q_STATS_KEY = 'nihonshi_q_stats_ultra_v60_official';
+        const SESSION_KEY = 'nihonshi_session_active_v60_official';
+
+        const praiseWords = ["Amazing!", "Brilliant!", "Outstanding!", "Genius!", "Neural Sync Complete!", "Elite Scholar!"];
+        const encourageWords = ["Keep it up!", "Don't give up!", "Nice try!", "Re-sync Data!", "Stay focused!"];
+
+        const getEl = (id) => document.getElementById(id);
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Stats Logic
+        function saveQuestionResult(qid, isCorrect) {
+            const data = JSON.parse(localStorage.getItem(Q_STATS_KEY) || '{}');
+            if(!data[qid]) data[qid] = { history: [], total: 0, correct: 0 };
+            data[qid].history.unshift(isCorrect);
+            data[qid].history = data[qid].history.slice(0, 5);
+            data[qid].total++; if(isCorrect) data[qid].correct++;
+            localStorage.setItem(Q_STATS_KEY, JSON.stringify(data));
+        }
+
+        function saveCurrentSession() {
+            const data = { quizData, currentIdx, score, streak, maxStreak, goalAcc, activeRange, sessionAnswers, isFeedbackMode: !canAnswer, incorrectIdx };
+            localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+        }
+        function clearSession() { localStorage.removeItem(SESSION_KEY); }
+
+        function toggleWeakList() {
+            const m = getEl('weak-point-modal'); m.classList.toggle('hidden');
+            if(!m.classList.contains('hidden')) renderWeakList();
+        }
+
+        function renderWeakList() {
+            const data = JSON.parse(localStorage.getItem(Q_STATS_KEY) || '{}');
+            const list = getEl('weak-point-list');
+            const items = Object.entries(data)
+                .map(([id, s]) => ({ id: parseInt(id), rate: Math.round((s.correct/s.total)*100) }))
+                .filter(i => i.rate < 80).sort((a,b) => a.rate - b.rate);
+            if(items.length === 0) { list.innerHTML = "No weak points detected."; return; }
+            list.innerHTML = items.map(i => {
+                const q = masterData.find(d => d.id === i.id);
+                return `<div class="bg-white/5 p-2 rounded mb-1 border-l-2 border-rose-500 flex justify-between"><span>${q ? q.question.substring(0,25) : 'Unk'}...</span><span class="text-rose-400 font-bold">${i.rate}%</span></div>`;
+            }).join('');
+        }
+
+        function startRecoveryMode() {
+            const stats = JSON.parse(localStorage.getItem(Q_STATS_KEY) || '{}');
+            const weakIds = Object.entries(stats).filter(([id, s]) => Math.round((s.correct/s.total)*100) < 80).map(([id, s]) => parseInt(id));
+            if(weakIds.length === 0) { alert("弱点はありません！"); return; }
+            quizData = masterData.filter(d => weakIds.includes(d.id));
+            activeRange = "Recovery"; goalAcc = parseInt(getEl('goal-select').value); startQuiz();
+        }
+
+        function updateStatsUI() {
+            const history = getHistory();
+            const att = getEl('total-attempts'); if(att) att.innerText = history.length;
+            if (history.length > 0) {
+                const la = getEl('last-accuracy'); if(la) la.innerText = history[0].score + '%';
+                const ba = getEl('best-accuracy'); if(ba) ba.innerText = Math.max(...history.map(h => h.score)) + '%';
+                const aa = getEl('all-time-accuracy'); if(aa) {
+                    const sumAcc = history.reduce((a, b) => a + b.score, 0);
+                    aa.innerText = Math.round(sumAcc / history.length) + '%';
+                }
+                const ra = getEl('recent-accuracy'); if(ra) {
+                    const recent = history.slice(0, 10);
+                    ra.innerText = Math.round(recent.reduce((a,b)=>a+b.score, 0) / recent.length) + '%';
+                }
+            }
+            renderChart(history);
+        }
+
+        function getHistory() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+
+        function renderChart(history) {
+            const can = getEl('performanceChart'); if(!can) return;
+            const ctx = can.getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            const data = [...history].reverse();
+            const labels = data.map(h => h.date);
+            let cum = 0; let totalP = 0;
+            const cumData = []; const sessionAcc = data.map(h => h.score); const overAcc = [];
+            data.forEach(h => { cum += h.correctCount; totalP += h.totalQ; cumData.push(cum); overAcc.push(Math.round((cum/totalP)*100)); });
+            const mVal = Math.max(...cumData, 0); let sMax = 100; if (mVal >= 100) sMax = Math.ceil((mVal+100)/100)*100;
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Cumulative', data: cumData, borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', yAxisID: 'y1', tension: 0.3, fill: true, pointRadius: 2 },
+                        { label: 'Session (%)', data: sessionAcc, borderColor: '#10b981', yAxisID: 'y2', tension: 0.1, pointRadius: 4, borderDash: [3,3] },
+                        { label: 'Overall (%)', data: overAcc, borderColor: '#f59e0b', yAxisID: 'y2', tension: 0.2, pointRadius: 0, borderWidth: 2 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#475569', font: { size: 8 } }, grid: { display: false } },
+                        y1: { type: 'linear', position: 'left', min: 0, suggestedMax: sMax, ticks: { color: '#94a3b8', font: { size: 8 } } },
+                        y2: { type: 'linear', position: 'right', min: 0, max: 100, ticks: { color: '#10b981', font: { size: 8 } } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function setRange(start, end) {
+            quizData = masterData.slice(start, end);
+            activeRange = `${start + 1}-${end}`;
+            goalAcc = parseInt(getEl('goal-select').value);
+            startQuiz();
+        }
+
+        function startQuiz() {
+            currentIdx = 0; score = 0; streak = 0; maxStreak = 0; sessionAnswers = []; incorrectIdx = [];
+            getEl('home-screen').classList.add('hidden'); getEl('result-screen').classList.add('hidden'); getEl('quiz-screen').classList.remove('hidden');
+            getEl('display-goal').innerText = goalAcc + '%'; getEl('q-total').innerText = quizData.length;
+            renderDots(); showQuestion(); saveCurrentSession();
+        }
+
+        function renderDots() {
+            const bar = getEl('dot-bar'); bar.innerHTML = '';
+            for (let i = 0; i < quizData.length; i++) {
+                const dotElement = document.createElement('div'); dotElement.className = 'progress-dot'; dotElement.id = `dot-${i}`;
+                if (sessionAnswers[i] === true) dotElement.classList.add('dot-correct');
+                else if (sessionAnswers[i] === false) dotElement.classList.add('dot-wrong');
+                bar.appendChild(dotElement);
+            }
+        }
+
+        function showQuestion() {
+            canAnswer = true;
+            const q = quizData[currentIdx];
+            getEl('q-current').innerText = currentIdx + 1;
+            const cAcc = currentIdx === 0 ? 0 : Math.round((score / currentIdx) * 100);
+            getEl('current-accuracy').innerText = cAcc + '%'; getEl('current-streak').innerText = streak;
+            const dc = getEl('delta-container'); dc.innerHTML = '';
+            for(let i=0; i<Math.min(streak, 40); i++) { const dMark = document.createElement('span'); dMark.className = 'delta-mark'; dMark.innerText = '⊿'; dc.appendChild(dMark); }
+            getEl('goal-indicator').style.width = cAcc + '%';
+            getEl('goal-indicator').style.backgroundColor = cAcc >= goalAcc ? '#10b981' : '#6366f1';
+            document.querySelectorAll('.progress-dot').forEach(d => d.classList.remove('dot-active'));
+            const activeDot = document.getElementById(`dot-${currentIdx}`); if(activeDot) activeDot.classList.add('dot-active');
+            const b = getEl('diff-badge'); b.innerText = q.diff;
+            b.className = q.diff === '標準' ? "px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black bg-slate-800 text-slate-300" : (q.diff === '難関' ? "px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black bg-indigo-900 text-indigo-200 border border-indigo-500/30" : "px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black bg-rose-900 text-rose-100 border border-rose-500/30");
+            const qs = JSON.parse(localStorage.getItem(Q_STATS_KEY) || '{}')[q.id] || { history: [], total: 0, correct: 0 };
+            getEl('q-history-stat').innerText = `${qs.total === 0 ? 0 : Math.round((qs.correct/qs.total)*100)}% (${qs.correct}/${qs.total})`;
+            const hd = getEl('question-history-dots'); hd.innerHTML = '';
+            for(let i=0; i<5; i++) {
+                const m = document.createElement('span'); m.className = "text-[10px] font-bold";
+                if (i < qs.history.length) { m.innerText = qs.history[i] ? '○' : '×'; m.className += qs.history[i] ? ' text-emerald-500' : ' text-rose-500'; }
+                else { m.innerText = '・'; m.className += ' text-slate-700'; } hd.appendChild(m);
+            }
+            getEl('question-text').innerText = q.question; getEl('feedback-area').classList.add('hidden');
+            const oc = getEl('options-container'); oc.innerHTML = '';
+            shuffleArray([...q.options]).forEach((opt) => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full text-left rounded-lg md:rounded-2xl border border-slate-700 transition-all font-medium flex items-center gap-3 group";
+                btn.innerHTML = `<div class="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 font-flashy text-[10px] group-hover:bg-indigo-500 group-hover:text-white transition-colors"></div><span class="flex-grow text-[11px] md:text-lg text-slate-200">${opt}</span>`;
+                btn.onclick = () => handleAnswer(opt, btn); oc.appendChild(btn);
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function handleAnswer(selected, btn) {
+            if (!canAnswer) return;
+            canAnswer = false;
+            const q = quizData[currentIdx];
+            const isCorrect = (selected === q.answer);
+            sessionAnswers[currentIdx] = isCorrect;
+            if(!isCorrect) incorrectIdx.push(currentIdx);
+            saveQuestionResult(q.id, isCorrect);
+            if (isCorrect) { score++; streak++; if (streak > maxStreak) maxStreak = streak; document.getElementById(`dot-${currentIdx}`).classList.add('dot-correct'); }
+            else { streak = 0; document.getElementById(`dot-${currentIdx}`).classList.add('dot-wrong'); }
+            const btns = getEl('options-container').getElementsByTagName('button');
+            for (let b of btns) {
+                b.disabled = true; const txt = b.querySelector('span').innerText;
+                if (txt === q.answer) { b.classList.add('border-emerald-500', 'bg-emerald-500/10'); b.querySelector('div').innerHTML = '<i class="fas fa-check text-white"></i>'; b.querySelector('div').className += ' bg-emerald-500'; }
+                else if (txt === selected && !isCorrect) { b.classList.add('border-rose-500', 'bg-rose-500/10'); b.querySelector('div').innerHTML = '<i class="fas fa-times text-white"></i>'; b.querySelector('div').className += ' bg-rose-500'; }
+            }
+            getEl('feedback-area').classList.remove('hidden');
+            const badge = getEl('result-badge'); const voice = getEl('voice-message');
+            if (isCorrect) { badge.className = "px-6 py-2 rounded-full text-xs font-black bg-emerald-500 text-white shadow-xl uppercase"; badge.innerText = 'CORRECT'; voice.innerText = praiseWords[Math.floor(Math.random()*praiseWords.length)]; }
+            else { badge.className = "px-6 py-2 rounded-full text-xs font-black bg-rose-500 text-white shadow-xl uppercase"; badge.innerText = 'INCORRECT'; voice.innerText = encourageWords[Math.floor(Math.random()*encourageWords.length)]; }
+            getEl('explanation-content').innerText = q.explanation;
+            saveCurrentSession();
+            setTimeout(() => { getEl('explanation-box').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 150);
+        }
+
+        getEl('next-btn').onclick = () => {
+            currentIdx++;
+            if (currentIdx < quizData.length) { showQuestion(); saveCurrentSession(); } 
+            else finishSession();
+        };
+
+        function finishSession() {
+            clearSession();
+            getEl('quiz-screen').classList.add('hidden'); getEl('result-screen').classList.remove('hidden');
+            const pct = Math.round((score / quizData.length) * 100);
+            getEl('final-score').innerText = pct; getEl('final-streak').innerText = maxStreak;
+            const isSuccess = pct >= goalAcc;
+            document.getElementById('final-praise').innerText = isSuccess ? "MISSION SUCCESS" : "TARGET NOT REACHED";
+            document.getElementById('final-praise-jp').innerText = isSuccess ? "目標達成！" : "ミッション失敗...";
+            let rJp = "";
+            if (pct === 100) rJp = "Absolute God (神の域) : 原始時代を完全に掌握しました。";
+            else if (pct >= 90) rJp = "Elite Scholar (最上位) : 卓越した実力です。難関校突破も目前です。";
+            else if (pct >= 80) rJp = "Strong Candidate (合格圏) : 確かな地力があります。おめでとうございます！";
+            else rJp = "Developing Mind (発展途上) : 知識の再充填が必要です。復習リストを活用しましょう。";
+            getEl('final-message').innerText = rJp;
+            getEl('final-icon').innerHTML = pct === 100 ? "👑" : (isSuccess ? "🎯" : "🔋");
+            if (incorrectIdx.length > 0) {
+                getEl('review-section').classList.remove('hidden');
+                getEl('review-list-container').innerHTML = incorrectIdx.map(idx => {
+                    const q = quizData[idx];
+                    return `<div class="glass-panel rounded-2xl p-5 border-l-4 border-l-rose-500 fade-in mb-4"><p class="text-[9px] font-black text-rose-400 uppercase mb-1">Index #${idx + 1}</p><h4 class="text-sm md:text-lg font-bold text-white mb-2 leading-tight">${q.question}</h4><div class="bg-emerald-500/10 rounded-lg p-2 mb-2 border border-emerald-500/20 text-[10px] md:text-sm"><span class="text-emerald-400 font-bold uppercase mr-2">Correct:</span> <span class="text-white font-bold">${q.answer}</span></div><div class="bg-white/5 rounded-lg p-3 text-[10px] md:text-sm text-slate-300 whitespace-pre-line leading-relaxed border border-white/5">${q.explanation}</div></div>`;
+                }).join('');
+            } else { getEl('review-section').classList.add('hidden'); }
+            const history = getHistory();
+            history.unshift({ date: new Date().toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit' }), score: pct, correctCount: score, totalQ: quizData.length, success: isSuccess });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(0, 50)));
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showHome() { clearSession(); getEl('result-screen').classList.add('hidden'); getEl('quiz-screen').classList.add('hidden'); getEl('home-screen').classList.remove('hidden'); updateStatsUI(); }
+
+        window.onload = () => {
+            initRefs();
+            updateStatsUI();
+            const saved = localStorage.getItem(SESSION_KEY);
+            if (saved) {
+                const s = JSON.parse(saved);
+                quizData = s.quizData; currentIdx = s.currentIdx; score = s.score; streak = s.streak; maxStreak = s.maxStreak; goalAcc = s.goalAcc; activeRange = s.activeRange; sessionAnswers = s.sessionAnswers || []; incorrectIdx = s.incorrectIdx || [];
+                getEl('home-screen').classList.add('hidden'); getEl('quiz-screen').classList.remove('hidden');
+                getEl('display-goal').innerText = goalAcc + '%'; getEl('q-total').innerText = quizData.length;
+                renderDots(); showQuestion();
+                if (s.isFeedbackMode) {
+                    canAnswer = false; const q = quizData[currentIdx]; const isCorrect = sessionAnswers[currentIdx];
+                    getEl('feedback-area').classList.remove('hidden'); getEl('explanation-content').innerText = q.explanation;
+                    const b = getEl('result-badge'); b.innerText = isCorrect ? 'CORRECT' : 'INCORRECT';
+                    b.className = isCorrect ? "px-6 py-2 rounded-full text-xs font-black bg-emerald-500 text-white shadow-xl uppercase" : "px-6 py-2 rounded-full text-xs font-black bg-rose-500 text-white shadow-xl uppercase";
+                    setTimeout(() => {
+                        const btns = getEl('options-container').getElementsByTagName('button');
+                        for (let btn of btns) { btn.disabled = true; if (btn.querySelector('span').innerText === q.answer) { btn.classList.add('border-emerald-500', 'bg-emerald-500/10'); b.querySelector('div').className += ' bg-emerald-500'; b.querySelector('div').innerHTML = '<i class="fas fa-check text-white"></i>'; } }
+                    }, 10);
+                }
+            }
+        };
+
+        function initRefs() {
+            const ids = ['total-attempts', 'last-accuracy', 'best-accuracy', 'all-time-accuracy', 'recent-accuracy', 'performanceChart', 'home-screen', 'quiz-screen', 'result-screen', 'display-goal', 'q-total', 'options-container', 'feedback-area', 'explanation-content', 'result-badge'];
+            ids.forEach(id => { if(!document.getElementById(id)) console.warn(`Missing element: ${id}`); });
+        }
+    </script>
+</body>
+</html>
